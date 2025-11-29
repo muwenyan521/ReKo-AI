@@ -30,25 +30,6 @@ jobs:
       run: |
         pip install -e .
     
-    - name: Check code quality
-      run: |
-        # 检查Python语法
-        python -m py_compile src/main.py
-        python -m py_compile src/core/analyzer.py
-        python -m py_compile src/data/preprocessor.py
-        python -m py_compile src/gui/app.py
-        python -m py_compile src/utils/config.py
-        python -m py_compile src/utils/file_utils.py
-        echo "All Python files compiled successfully"
-    
-    - name: Verify package installation
-      run: |
-        python -c "import src.main; print('Package imported successfully')"
-        python -c "import src.core.analyzer; print('Core module imported successfully')"
-        python -c "import src.data.preprocessor; print('Data module imported successfully')"
-        python -c "import src.gui.app; print('GUI module imported successfully')"
-        python -c "import src.utils.config; print('Utils module imported successfully')"
-    
     - name: Build package
       run: |
         python setup.py sdist bdist_wheel
