@@ -32,7 +32,6 @@ jobs:
     - name: Build Windows executable
       run: |
         pyinstaller --onefile --name reko-ai-windows src/main.py
-        dir dist /a
     
     - name: Upload Windows executable
       uses: actions/upload-artifact@v4
