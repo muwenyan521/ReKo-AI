@@ -36,15 +36,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install build twine
+        pip install build twine pyinstaller
     
     - name: Install package
       run: |
         pip install -e .
-    
-    - name: Verify package
-      run: |
-        python -c "import src.main; print('Package verified successfully')"
     
     - name: Build package
       run: |
@@ -54,6 +50,11 @@ jobs:
       run: |
         pip install dist/*.whl
         python -c "import reko_ai; print('Package installed and imported successfully')"
+    
+    - name: Build Linux executable
+      run: |
+        pyinstaller --onefile --name reko-ai-linux src/main.py
+        ls -la dist/
     
     - name: Create Release
       id: create_release
@@ -86,4 +87,13 @@ jobs:
         asset_path: ./dist/reko_ai-${{ github.event.inputs.release_version }}.tar.gz
         asset_name: reko_ai-${{ github.event.inputs.release_version }}.tar.gz
         asset_content_type: application/gzip
-
+    
+    - name: Upload Release Asset - Linux Executable
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/reko-ai-linux
+        asset_name: reko-ai-linux-${{ github.event.inputs.release_version }}
+        asset_content_type: application/octet-stream
