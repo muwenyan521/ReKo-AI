@@ -61,6 +61,8 @@ class AIDialogApp:
         # 设置窗口关闭协议
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         
+        self.load_default_documents()
+        
     def create_widgets(self):
         """创建GUI组件 - 构建对话界面和控制面板"""
         # 从配置获取字体设置
@@ -429,6 +431,63 @@ class AIDialogApp:
                     like_btn.config(state=tk.DISABLED, bg="#CCCCCC")
                     dislike_btn.config(state=tk.DISABLED, bg="#CCCCCC")
                     break
+    
+    def load_default_documents(self):
+        # 加载默认技术文档
+        try:
+            sample_docs_path = get_config("paths.sample_docs", "resources/sample_docs")
+            
+            if not os.path.exists(sample_docs_path):
+                self.add_message("系统", f"默认文档路径不存在: {sample_docs_path}")
+                self.status_display.config(text="默认文档路径不存在")
+                return
+            
+            if not os.path.isdir(sample_docs_path):
+                self.add_message("系统", f"默认文档路径不是目录: {sample_docs_path}")
+                self.status_display.config(text="默认文档路径不是目录")
+                return
+            
+            self.add_message("系统", f"正在加载默认技术文档: {sample_docs_path}")
+            self.status_display.config(text="正在加载默认文档...")
+            
+            threading.Thread(target=self._load_default_documents_thread, args=(sample_docs_path,), daemon=True).start()
+            
+        except Exception as e:
+            self.add_message("系统", f"加载默认文档出错: {str(e)}")
+            self.status_display.config(text="加载默认文档失败")
+    
+    def _load_default_documents_thread(self, folder_path):
+        try:
+            documents = []
+            loaded_files = []
+            
+            for root, dirs, files in os.walk(folder_path):
+                for file in files:
+                    if file.endswith(".txt"):
+                        file_path = os.path.join(root, file)
+                        try:
+                            with open(file_path, 'r', encoding='utf-8') as f:
+                                content = f.read()
+                                if content.strip():
+                                    documents.append(content)
+                                    loaded_files.append(file)
+                        except Exception as e:
+                            print(f"读取文件 {file_path} 出错: {e}")
+            
+            if documents:
+                self.documents = documents
+                
+                self.root.after(0, lambda: self.add_message("系统", f"成功加载 {len(documents)} 个默认文档: {', '.join(loaded_files)}"))
+                self.root.after(0, lambda: self.status_display.config(text=f"已加载 {len(documents)} 个默认文档"))
+                
+                self.root.after(1000, self.process_documents)
+            else:
+                self.root.after(0, lambda: self.add_message("系统", f"在 {folder_path} 中未找到有效的TXT文档"))
+                self.root.after(0, lambda: self.status_display.config(text="未找到默认文档"))
+            
+        except Exception as e:
+            self.root.after(0, lambda: self.add_message("系统", f"加载默认文档出错: {str(e)}"))
+            self.root.after(0, lambda: self.status_display.config(text="加载默认文档失败"))
     
     def on_closing(self):
         """窗口关闭时的处理函数 - 清理资源并退出程序"""
